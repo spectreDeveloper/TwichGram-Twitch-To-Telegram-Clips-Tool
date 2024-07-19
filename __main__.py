@@ -13,6 +13,9 @@ from pyrogram.errors import FloodWait
 
 from aiohttp import web
 
+import orjson
+import argparse
+
 class TwitchClip:
     slug: str
     title: str
@@ -39,6 +42,7 @@ class TimestampFilter(logging.Filter):
     def filter(self, record):
         record.timestamp = int(time.time())
         return True
+
 logging.getLogger('pyrogram').setLevel(logging.CRITICAL)
   
 log_format = "[%(asctime)s] [%(levelname)s] [%(timestamp)s] %(message)s"
@@ -54,27 +58,19 @@ logger = logging.getLogger()
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-CONFIGS: dict = {
-    'broadcaster_id': 12345678, # Broadcaster ID is the numeric id of a twitch channel (can retrive via api)
-    'broadcaster_name': "twitchstreamername", # Broadcaster name is the username of the twitch channel
-    'twitch_client_id': "", # Twitch client id for api requests
-    'twitch_client_secret': "", # Twitch client secret for api requests
-    'clip_fetch_interval': 120, # Interval in seconds to wait before fetching new clips
-    
-    'app_id': 0, # Telegram app id (retrive from my.telegram.org)
-    'app_hash': "", # Telegram app hash (retrive from my.telegram.org)
-    'session_name': "clips", # Session name, used to store session telegram data (advice not change it)
-    
-    'telegram_channel_name': "theclips", # Telegram channel name to share clips (need to be public)
-    'telegram_bot_token': "", # Telegram bot token (retrive from BotFather)
-    'target_chat_ids': [ 
-        -123456789 # Telegram chat ids where send clips (can be multiple)
-    ],
-    'enable_clip_server': True, # Enable or disable the clip server to play clips in a web page via url
-    'clip_server_host': '0.0.0.0', # Clip server host (use 0.0.0.0 to listen on all interfaces, or set a specific ip like "127.0.0.1")
-    'clip_server_port': 5000, # Clip server port (set a port to listen for http requests)
-    'loading_video_picture': 'https://static-cdn.jtvnw.net/jtv_user_pictures/12345678/picture.jpeg' # Picture to show while loading the video in the server page
-}
+def load_configs():
+    parse_json = lambda p: orjson.loads(open(p, "rb").read())
+    argparser: argparse.ArgumentParser = argparse.ArgumentParser()
+    try:
+        argparser.add_argument("-config", type=parse_json, required=False, default="./data/configs.json", help="Path to the config file")
+        arguments = argparser.parse_args()
+        return arguments.config
+    except Exception as e:
+        logging.error(f"Error during loading config file: {e}")
+        exit(1)
+
+# load configs as CONFIGS
+CONFIGS: dict = load_configs()
 
 def get_oauth_headers(auth_token: str, client_id: str) -> dict:
     return {
@@ -82,7 +78,7 @@ def get_oauth_headers(auth_token: str, client_id: str) -> dict:
         'Client-Id': client_id,
     }
 
-#db parts
+# db parts
 async def init_clips_database():
     async with aiosqlite.connect('clips.db') as db:
         await db.execute('CREATE TABLE IF NOT EXISTS clips (slug TEXT PRIMARY KEY, title TEXT, url TEXT, created_at TEXT, durationSeconds INTEGER, curator_name TEXT, curator_url TEXT, thumbnail_url TEXT, mp4_url TEXT)')
@@ -130,8 +126,6 @@ async def fetch_clips(clips_queue: asyncio.Queue, telegram_queue: asyncio.Queue,
             expiring_date = datetime.now() + timedelta(seconds=oauth_token[1])
             
         cursor: str = ""
-        #start_date: str = datetime(2020, 1, 1).strftime('%Y-%m-%dT%H:%M:%SZ')
-        # a week ago
         start_date: str = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
         
         try:
@@ -398,7 +392,6 @@ async def run_clip_server(database_instance: aiosqlite.Connection, host: str, po
     await site.start()
     logging.info(f"Clip server started on port {port}")
                 
-    
     
 async def main():
     await init_clips_database()
