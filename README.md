@@ -30,7 +30,7 @@ TwichGram is a Python tool that automates downloading Twitch clips and sending t
 
 Set up your configuration in data/config.json following this legend:
 
-    CONFIGS = {
+    {
         'broadcaster_id': 12345678, # Broadcaster ID is the numeric ID of a Twitch channel (can be retrieved via API)
         'broadcaster_name': "twitchstreamername", # Broadcaster name is the username of the Twitch channel
         'twitch_client_id': "", # Twitch client ID for API requests
@@ -62,6 +62,11 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
   If enable_clip_server is set to True, the clip server will be automatically started (no https, just http)
 
     Use the server URL in OBS to display random clips.
+
+<h2>📝 Customize</h2>
+    You can customize two part of codes:
+     - The HTML Inside handle_index_request function (here can customize the template of the clip web-server page)
+     - Telegram message from send_clip_to_telegram function
 
 <h2>Contributing 🤝</h2>
 
