@@ -28,7 +28,7 @@ TwichGram is a Python tool that automates downloading Twitch clips and sending t
 <h2>Usage 📖</h2>
 <h3>Configuration</h3>
 
-Set up your configuration dictionary with the necessary details:
+Set up your configuration in data/config.json following this legend:
 
     CONFIGS = {
         'broadcaster_id': 12345678, # Broadcaster ID is the numeric ID of a Twitch channel (can be retrieved via API)
