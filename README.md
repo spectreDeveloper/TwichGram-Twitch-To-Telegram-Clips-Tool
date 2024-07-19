@@ -11,7 +11,6 @@ Features ✨
 <h3>Prerequisites 📋</h3>
 
     Python 3.12
-    Dependencies in requirements.txt
 
 <h3>Installation 💻</h3>
 
@@ -22,6 +21,8 @@ Features ✨
 <h3>Install the dependencies:</h3>
 
     pip install -r requirements.txt
+    pip install https://github.com/KurimuzonAkuma/pyrogram/archive/v2.1.22.zip --force-reinstall (check the latest version from here: https://github.com/KurimuzonAkuma/pyrogram/tags)
+
 
 <h2>Usage 📖</h2>
 <h3>Configuration</h3>
