@@ -1,7 +1,8 @@
 <h1>TwichGram: Twitch to Telegram Clips Tool 🎥➡️📲</h1>
 
 TwichGram is a Python tool that automates downloading Twitch clips and sending them to a Telegram channel. It also offers an optional server for displaying random clips, perfect for OBS integration during offline moments.
-Features ✨
+
+<h2>Features ✨</h2>
 
     Automatic Clip Download 🎥: Downloads clips from a specified Twitch streamer.
     Telegram Integration 📲: Sends downloaded clips to a Telegram channel.
@@ -59,8 +60,6 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
 <h2>Setting Up the Clip Viewing Server 🌐</h2>
 
   If enable_clip_server is set to True, the clip server will be automatically started (no https, just http)
-
-    python server.py
 
     Use the server URL in OBS to display random clips.
 
