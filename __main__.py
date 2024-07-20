@@ -63,12 +63,6 @@ def load_configs():
 # load configs as CONFIGS
 CONFIGS: dict = load_configs()
 
-def get_oauth_headers(auth_token: str, client_id: str) -> dict:
-    return {
-        'Authorization': f'Bearer {auth_token}',
-        'Client-Id': client_id,
-    }
-
 # db parts
 async def init_clips_database():
     async with aiosqlite.connect('clips.db') as db:
@@ -86,6 +80,12 @@ async def check_if_clip_exists(slug: str, db: aiosqlite.Connection) -> bool:
         return False
 
 # oauth2/token params
+def get_oauth_headers(auth_token: str, client_id: str) -> dict:
+    return {
+        'Authorization': f'Bearer {auth_token}',
+        'Client-Id': client_id,
+    }
+
 async def get_twitch_bearer() -> tuple:
     async with aiohttp.ClientSession() as session:
         async with session.post("https://id.twitch.tv/oauth2/token", data={
@@ -222,7 +222,6 @@ async def process_telegram_queue(telegram_queue: asyncio.Queue, aiohttp_session:
                 await send_clip_to_telegram(clip, aiohttp_session, pyro_instance, target_chat_id)
 
 # clip server part
-
 async def run_clip_server(database_instance: aiosqlite.Connection, host: str, port: int):
     async def handle_clip_request(request):
         async with database_instance.execute('SELECT slug, mp4_url, title FROM clips ORDER BY RANDOM() LIMIT 1') as cursor:
