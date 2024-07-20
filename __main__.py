@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import time
 import logging
+import os
+
 from io import BytesIO
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -223,6 +225,7 @@ async def process_telegram_queue(telegram_queue: asyncio.Queue, aiohttp_session:
 
 # clip server part
 async def run_clip_server(database_instance: aiosqlite.Connection, host: str, port: int):
+        
     async def handle_clip_request(request):
         async with database_instance.execute('SELECT slug, mp4_url, title FROM clips ORDER BY RANDOM() LIMIT 1') as cursor:
             clip = await cursor.fetchone()
@@ -233,143 +236,7 @@ async def run_clip_server(database_instance: aiosqlite.Connection, host: str, po
                 return web.json_response({'error': 'No clips found'}, status=404)
 
     async def handle_index_request(request):
-        html_content = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Random Clip Player</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    text-align: center;
-                    background-color: #f0f0f0;
-                    margin: 0;
-                    overflow: hidden;
-                    height: 100vh; /* Ensure the body covers full viewport height */
-                }
-                h1 {
-                    color: #333;
-                }
-                p {
-                    color: #FFFFFF;
-                }
-                
-                .video-container {
-                    position: relative;
-                    width: 100%;
-                    height: 100%;
-                    max-width: 100%;
-                    margin: 0 auto;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }
-
-                video {
-                    width: 100%;
-                    max-width: 100%;
-                    height: 100%;
-                    display: none; /* Hide the video initially */
-                }
-
-                .loading-overlay {
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 10; /* Ensure overlay is on top */
-                    transition: opacity 0.5s ease; /* Smooth transition for hiding */
-                }
-
-                .spinner {
-                    width: 100px; /* Adjust size as needed */
-                    height: 100px; /* Adjust size as needed */
-                    animation: spin 1s linear infinite; /* Spin animation */
-                }
-
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="video-info">
-                <p><strong id="clipTitle">Loading...</strong> | @leclipdicerrone SU TELEGRAM per tutte le clip</p>
-            </div>
-            <div class="video-container">
-                <div id="loadingOverlay" class="loading-overlay">
-                    <img src="[PICTURE_LOAD_HERE]" alt="Loading..." class="spinner">
-                </div>
-                <video id="clipVideo" controls autoplay playsinline>
-                    <source id="videoSource" src="" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-            <script>
-                async function loadNewClip() {
-                    try {
-                        const response = await fetch('/clip');
-                        if (response.ok) {
-                            const clip = await response.json();
-                            const videoElement = document.getElementById('clipVideo');
-                            const videoSource = document.getElementById('videoSource');
-                            const loadingOverlay = document.getElementById('loadingOverlay');
-                            const clipTitle = document.getElementById('clipTitle');
-
-                            // Update video source and clip title
-                            videoSource.src = clip.mp4_url;
-                            clipTitle.textContent = clip.title || 'Random Clip'; // Update with actual title
-                            videoElement.load();
-
-                            // Show loading overlay
-                            loadingOverlay.style.display = 'flex';
-
-                            // Show video and request full-screen mode when video is ready
-                            videoElement.addEventListener('canplay', () => {
-                                loadingOverlay.style.opacity = '0'; // Fade out loading overlay
-                                setTimeout(() => {
-                                    loadingOverlay.style.display = 'none'; // Hide the overlay completely after fade-out
-                                }, 500); // Match the duration of the transition
-                                videoElement.style.display = 'block'; // Show video
-                            });
-
-                            // Clean up previous event listeners
-                            videoElement.removeEventListener('error', handleError);
-                            videoElement.addEventListener('error', handleError);
-
-                        } else {
-                            console.error('Failed to fetch clip:', response.statusText);
-                            document.getElementById('loadingOverlay').innerHTML = 'Failed to fetch video. Please refresh.';
-                        }
-                    } catch (error) {
-                        console.error('Error fetching clip:', error);
-                        document.getElementById('loadingOverlay').innerHTML = 'Error fetching video. Please try again.';
-                        document.getElementById('loadingOverlay').style.background = 'rgba(255, 0, 0, 0.5)'; // Red background for errors
-                    }
-                }
-
-                function handleError(event) {
-                    console.error('Video error:', event);
-                    const loadingOverlay = document.getElementById('loadingOverlay');
-                    loadingOverlay.innerHTML = 'Failed to load video. Please try again.';
-                    loadingOverlay.style.background = 'rgba(255, 0, 0, 0.5)'; // Red background for errors
-                }
-
-                document.getElementById('clipVideo').addEventListener('ended', loadNewClip);
-
-                // Load a new clip when the page loads
-                window.onload = loadNewClip;
-            </script>
-        </body>
-        </html>
-        """.replace('[PICTURE_LOAD_HERE]', CONFIGS['loading_video_picture'])
-
-
-        
+        html_content: str = open('static/index.html', 'r').read().replace('[PICTURE_LOAD_HERE]', CONFIGS['loading_video_picture'])
         return web.Response(text=html_content, content_type='text/html')
 
     app = web.Application()
@@ -404,9 +271,11 @@ async def main():
     tasks.append(asyncio.create_task(process_clips_queue(clips_queue, telegram_queue, database_instance)))
     tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
     
-    if CONFIGS['enable_clip_server']:
+    if CONFIGS['enable_clip_server'] and os.path.exists('static/index.html'):
         tasks.append(asyncio.create_task(run_clip_server(database_instance, CONFIGS['clip_server_host'], CONFIGS['clip_server_port'])))
-    
+    elif not os.path.exists('static/index.html'):
+        logging.error("No index.html file found in static/ directory! Server will not start")
+        
     await asyncio.gather(*tasks)
     
 if __name__ == '__main__':
