@@ -3,6 +3,7 @@ import time
 import logging
 from io import BytesIO
 from datetime import datetime, timedelta
+from dataclasses import dataclass
 
 import asyncio
 import aiohttp
@@ -16,6 +17,7 @@ from aiohttp import web
 import orjson
 import argparse
 
+@dataclass
 class TwitchClip:
     slug: str
     title: str
@@ -26,17 +28,6 @@ class TwitchClip:
     curator_url:  str | None
     thumbnail_url: str
     mp4_url:  str | None
-    
-    def __init__(self, slug, title, url, created_at, durationSeconds, curator_name, curator_url, thumbnail_url, mp4_url):
-        self.slug = slug
-        self.title = title
-        self.url = url
-        self.created_at = created_at
-        self.durationSeconds = durationSeconds
-        self.curator_name = curator_name
-        self.curator_url = curator_url
-        self.thumbnail_url = thumbnail_url
-        self.mp4_url = mp4_url
 
 class TimestampFilter(logging.Filter):
     def filter(self, record):
