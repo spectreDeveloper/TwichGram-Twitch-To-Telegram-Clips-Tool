@@ -65,7 +65,7 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
 
 <h2>📝 Customize</h2>
     <h3>You can customize two part of codes:<br></h3>
-    The HTML Inside handle_index_request function (here can customize the template of the clip web-server page)<br>
+    The HTML Inside the file index.html located in static/index.html<br>
     Telegram message from send_clip_to_telegram function<br>
 
 <h2>Contributing 🤝</h2>
