@@ -19,6 +19,8 @@ from aiohttp import web
 import orjson
 import argparse
 
+import random
+
 @dataclass
 class TwitchClip:
     slug: str
@@ -236,7 +238,7 @@ async def run_clip_server(database_instance: aiosqlite.Connection, host: str, po
                 return web.json_response({'error': 'No clips found'}, status=404)
 
     async def handle_index_request(request):
-        html_content: str = open('static/index.html', 'r').read().replace('[PICTURE_LOAD_HERE]', CONFIGS['loading_video_picture'])
+        html_content: str = open('static/index.html', 'r').read().replace('[PICTURE_LOAD_HERE]', random.choice(CONFIGS['background_pictures']))
         return web.Response(text=html_content, content_type='text/html')
 
     app = web.Application()
