@@ -49,7 +49,9 @@ Set up your configuration in data/config.json following this legend:
         'enable_clip_server': True, # Enable or disable the clip server (allows the server to be up or not)
         'clip_server_host': '0.0.0.0', # Clip server host (use 0.0.0.0 to listen on all interfaces, or set a specific IP like "127.0.0.1")
         'clip_server_port': 5000, # Clip server port (set a port to listen for HTTP requests)
-        'loading_video_picture': 'https://static-cdn.jtvnw.net/jtv_user_pictures/12345678/picture.jpeg' # Picture to show while loading the video on the server page
+        'loading_video_pictures':[
+            'https://static-cdn.jtvnw.net/jtv_user_pictures/12345678/picture.jpeg' # Pictures to show while loading the video on the server page. Separe it using json syntax.
+        ]
     }
 
 Downloading Clips and Sending to Telegram
