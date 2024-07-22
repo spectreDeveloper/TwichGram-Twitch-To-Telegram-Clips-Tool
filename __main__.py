@@ -106,7 +106,7 @@ async def get_twitch_bearer() -> tuple:
                 return (None, None)
            
 # clips part
-async def fetch_clips(clips_queue: asyncio.Queue, telegram_queue: asyncio.Queue, aiohttp_session: aiohttp.ClientSession):
+async def fetch_clips(clips_queue: asyncio.Queue, aiohttp_session: aiohttp.ClientSession):
     oauth_token: str = await get_twitch_bearer()
     oauth_headers: dict = get_oauth_headers(oauth_token[0], CONFIGS['twitch_client_id'])
     expiring_date: datetime = datetime.now() + timedelta(seconds=oauth_token[1])
@@ -267,7 +267,7 @@ async def main():
     
     database_instance: aiosqlite.Connection = await aiosqlite.connect("clips.db")
     
-    tasks.append(asyncio.create_task(fetch_clips(clips_queue, telegram_queue, aiohttp_session)))
+    tasks.append(asyncio.create_task(fetch_clips(clips_queue, aiohttp_session)))
     tasks.append(asyncio.create_task(process_clips_queue(clips_queue, telegram_queue, database_instance)))
     tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
     
