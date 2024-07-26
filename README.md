@@ -70,6 +70,11 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
     The HTML Inside the file index.html located in static/index.html<br>
     Telegram message from send_clip_to_telegram function<br>
 
+<h2>⚡️API Integration and Blacklist</h2>
+    <h3>You can now use three new endpoints to handle the clips blacklist<h3>
+    - /get_blacklisted_clips | GET | Require webserver_secret_token | Show all clips blacklisted.
+    - /add_to_blacklist | POST | Require webserver_secret_token | Add a slug as json body to add a clip in blacklist.
+    - /remove_from_blacklist | POST | Require webserver_secret_token | Add a slug as json body to remove a clip in blacklist.
 <h2>Contributing 🤝</h2>
 
 Contributions are welcome! Fork the repository and submit a pull request.
