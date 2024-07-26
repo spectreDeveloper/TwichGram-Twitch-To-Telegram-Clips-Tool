@@ -7,7 +7,7 @@ TwichGram is a Python tool that automates downloading Twitch clips and sending t
     Automatic Clip Download 🎥: Downloads clips from a specified Twitch streamer.
     Telegram Integration 📲: Sends downloaded clips to a Telegram channel.
     Clip Viewing Server 🌐: Optionally create a server to display random clips.
-
+    API Support ⚡️: to handle a Blacklist to prevent show clips with inside bannable words.
 <h2>Getting Started 🚀</h2>
 <h3>Prerequisites 📋</h3>
 
