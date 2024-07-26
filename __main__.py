@@ -71,6 +71,11 @@ CONFIGS: dict = load_configs()
 async def init_clips_database():
     async with aiosqlite.connect('clips.db') as db:
         await db.execute('CREATE TABLE IF NOT EXISTS clips (slug TEXT PRIMARY KEY, title TEXT, url TEXT, created_at TEXT, durationSeconds INTEGER, curator_name TEXT, curator_url TEXT, thumbnail_url TEXT, mp4_url TEXT)')
+        await db.execute('CREATE TABLE IF NOT EXISTS blacklist_clips (slug TEXT PRIMARY KEY)')
+        
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_clips_slug ON clips (slug)')
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_blacklist_clips_slug ON blacklist_clips (slug)')
+        
         await db.commit()
 
 async def add_clip_to_db(clip: TwitchClip, db: aiosqlite.Connection):
@@ -82,6 +87,27 @@ async def check_if_clip_exists(slug: str, db: aiosqlite.Connection) -> bool:
         if await cursor.fetchone():
             return True
         return False
+
+async def check_if_clip_is_blacklisted(slug: str, db: aiosqlite.Connection) -> bool:
+    async with db.execute('SELECT slug FROM blacklist_clips WHERE slug = ?', (slug,)) as cursor:
+        if await cursor.fetchone():
+            return True
+        return False
+    
+async def add_clip_to_blacklist(slug: str, db: aiosqlite.Connection):
+    if await check_if_clip_exists(slug, db) and not await check_if_clip_is_blacklisted(slug, db):
+        async with db.execute('INSERT INTO blacklist_clips VALUES (?)', (slug,)) as cursor:
+            await db.commit()
+        
+async def remove_clip_from_blacklist(slug: str, db: aiosqlite.Connection):
+    if await check_if_clip_exists(slug, db) and await check_if_clip_is_blacklisted(slug, db):
+        async with db.execute('DELETE FROM blacklist_clips WHERE slug = ?', (slug,)) as cursor:
+            await db.commit()
+        
+async def get_blacklisted_clips(db: aiosqlite.Connection) -> list:
+    async with db.execute('SELECT title, url FROM clips WHERE slug IN (SELECT slug FROM blacklist_clips)') as cursor:
+        return await cursor.fetchall()
+    
 
 # oauth2/token params
 def get_oauth_headers(auth_token: str, client_id: str) -> dict:
@@ -229,7 +255,7 @@ async def process_telegram_queue(telegram_queue: asyncio.Queue, aiohttp_session:
 async def run_clip_server(database_instance: aiosqlite.Connection, host: str, port: int):
         
     async def handle_clip_request(request):
-        async with database_instance.execute('SELECT slug, mp4_url, title FROM clips ORDER BY RANDOM() LIMIT 1') as cursor:
+        async with database_instance.execute('SELECT slug, mp4_url, title FROM clips WHERE slug NOT IN (SELECT slug FROM blacklist_clips) ORDER BY RANDOM() LIMIT 1') as cursor:
             clip = await cursor.fetchone()
             if clip:
                 slug, mp4_url, title = clip
@@ -241,10 +267,40 @@ async def run_clip_server(database_instance: aiosqlite.Connection, host: str, po
         html_content: str = open('static/index.html', 'r').read().replace('[PICTURE_LOAD_HERE]', random.choice(CONFIGS['loading_video_pictures']))
         return web.Response(text=html_content, content_type='text/html')
 
+    async def get_blacklist_clips(request):
+        if request.method == 'GET' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
+            blacklisted_clips = await get_blacklisted_clips(database_instance)
+            return web.json_response({'blacklisted_clips': blacklisted_clips})
+        
+    async def add_to_blacklist(request):
+        if request.method == 'POST' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
+            data: dict = await request.json()
+            slug: str = data.get('slug')
+            if slug:
+                await add_clip_to_blacklist(slug, database_instance)
+                return web.json_response({'status': 'success'})
+            else:
+                return web.json_response({'error': 'No slug provided'}, status=400)
+            
+    async def remove_from_blacklist(request):
+        if request.method == 'POST' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
+            data: dict = await request.json()
+            slug: str = data.get('slug')
+            if slug:
+                await remove_clip_from_blacklist(slug, database_instance)
+                return web.json_response({'status': 'success'})
+            else:
+                return web.json_response({'error': 'No slug provided'}, status=400)
+
     app = web.Application()
     app.add_routes([web.get('/clip', handle_clip_request)])
     app.add_routes([web.get('/', handle_index_request)])
 
+    app.add_routes([web.get('/get_blacklisted_clips', get_blacklist_clips)])
+    app.add_routes([web.post('/add_to_blacklist', add_to_blacklist)])
+    app.add_routes([web.post('/remove_from_blacklist', remove_from_blacklist)])
+    
+    
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, host, port)
@@ -272,7 +328,7 @@ async def main():
     tasks.append(asyncio.create_task(fetch_clips(clips_queue, aiohttp_session)))
     tasks.append(asyncio.create_task(process_clips_queue(clips_queue, telegram_queue, database_instance)))
     tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
-    
+                 
     if CONFIGS['enable_clip_server'] and os.path.exists('static/index.html'):
         tasks.append(asyncio.create_task(run_clip_server(database_instance, CONFIGS['clip_server_host'], CONFIGS['clip_server_port'])))
     elif not os.path.exists('static/index.html'):
