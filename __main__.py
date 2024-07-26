@@ -343,7 +343,7 @@ async def main():
     
     tasks.append(asyncio.create_task(fetch_clips(clips_queue, aiohttp_session)))
     tasks.append(asyncio.create_task(process_clips_queue(clips_queue, telegram_queue, database_instance)))
-    #tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
+    tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
                  
     if CONFIGS['enable_clip_server'] and os.path.exists('static/index.html'):
         tasks.append(asyncio.create_task(run_clip_server(database_instance, CONFIGS['clip_server_host'], CONFIGS['clip_server_port'])))
