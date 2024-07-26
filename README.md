@@ -76,7 +76,7 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
     - /add_to_blacklist | POST | Require webserver_secret_token | Add a slug as json body to add a clip in blacklist.<br>
     - /remove_from_blacklist | POST | Require webserver_secret_token | Add a slug as json body to remove a clip in blacklist.<br>
 
-    <h2>Screenshots</h2>
+<h2>API Screenshots</h2>
     <img src="https://telegra.ph/file/d64a5b709eff5f5f04040.jpg"></img><br>
     <img src="">https://telegra.ph/file/1b40c9745cbd1c184fed9.jpg</img><br>
     <img src="https://telegra.ph/file/4f615e297d68104db14af.jpg"></img><br>
