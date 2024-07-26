@@ -51,7 +51,8 @@ Set up your configuration in data/config.json following this legend:
         'clip_server_port': 5000, # Clip server port (set a port to listen for HTTP requests)
         'loading_video_pictures':[
             'https://static-cdn.jtvnw.net/jtv_user_pictures/12345678/picture.jpeg' # Pictures to show while loading the video on the server page. Separe it using json syntax.
-        ]
+        ],
+        "webserver_secret_token": "ADDSECRETHERE" # Secret token for WEBSERVER API, Make it complex.
     }
 
 Downloading Clips and Sending to Telegram
