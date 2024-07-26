@@ -72,9 +72,15 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
 
 <h2>⚡️API Integration and Blacklist</h2>
     <h3>You can now use three new endpoints to handle the clips blacklist</h3>
-    - /get_blacklisted_clips | GET | Require webserver_secret_token | Show all clips blacklisted.
-    - /add_to_blacklist | POST | Require webserver_secret_token | Add a slug as json body to add a clip in blacklist.
-    - /remove_from_blacklist | POST | Require webserver_secret_token | Add a slug as json body to remove a clip in blacklist.
+    - /get_blacklisted_clips | GET | Require webserver_secret_token | Show all clips blacklisted.<br>
+    - /add_to_blacklist | POST | Require webserver_secret_token | Add a slug as json body to add a clip in blacklist.<br>
+    - /remove_from_blacklist | POST | Require webserver_secret_token | Add a slug as json body to remove a clip in blacklist.<br>
+
+    <h2>Screenshots</h2>
+    <img src="https://telegra.ph/file/d64a5b709eff5f5f04040.jpg"></img><br>
+    <img src="">https://telegra.ph/file/1b40c9745cbd1c184fed9.jpg</img><br>
+    <img src="https://telegra.ph/file/4f615e297d68104db14af.jpg"></img><br>
+    
 <h2>Contributing 🤝</h2>
 
 Contributions are welcome! Fork the repository and submit a pull request.
