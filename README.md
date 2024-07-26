@@ -78,7 +78,7 @@ Ensure your configuration is set up with the necessary Twitch and Telegram crede
 
 <h2>API Screenshots</h2>
     <img src="https://telegra.ph/file/d64a5b709eff5f5f04040.jpg"></img><br>
-    <img src="">https://telegra.ph/file/1b40c9745cbd1c184fed9.jpg</img><br>
+    <img src="https://telegra.ph/file/1b40c9745cbd1c184fed9.jpg"></img><br>
     <img src="https://telegra.ph/file/4f615e297d68104db14af.jpg"></img><br>
     
 <h2>Contributing 🤝</h2>
