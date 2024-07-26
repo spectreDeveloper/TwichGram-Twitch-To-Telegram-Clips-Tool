@@ -105,7 +105,7 @@ async def remove_clip_from_blacklist(slug: str, db: aiosqlite.Connection):
             await db.commit()
         
 async def get_blacklisted_clips(db: aiosqlite.Connection) -> list:
-    async with db.execute('SELECT title, url FROM clips WHERE slug IN (SELECT slug FROM blacklist_clips)') as cursor:
+    async with db.execute('SELECT slug,title, url FROM clips WHERE slug IN (SELECT slug FROM blacklist_clips)') as cursor:
         return await cursor.fetchall()
     
 
@@ -268,29 +268,45 @@ async def run_clip_server(database_instance: aiosqlite.Connection, host: str, po
         return web.Response(text=html_content, content_type='text/html')
 
     async def get_blacklist_clips(request):
-        if request.method == 'GET' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
-            blacklisted_clips = await get_blacklisted_clips(database_instance)
-            return web.json_response({'blacklisted_clips': blacklisted_clips})
+        try:
+            if request.method == 'GET' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
+                blacklisted_clips = await get_blacklisted_clips(database_instance)
+                for i, clip in enumerate(blacklisted_clips):
+                    blacklisted_clips[i] = {'slug': clip[0], 'title': clip[1], 'url': clip[2]}
+                return web.json_response({'blacklisted_clips': blacklisted_clips})
+            else:
+                return web.json_response({'error': 'Unauthorized'}, status=401)
+        except Exception as e:
+            logging.error(f"Error: {e} - {request} - {request.query} - {request.headers}")
+            return web.json_response({'error': 'Internal server error'}, status=500)
         
     async def add_to_blacklist(request):
-        if request.method == 'POST' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
-            data: dict = await request.json()
-            slug: str = data.get('slug')
-            if slug:
-                await add_clip_to_blacklist(slug, database_instance)
-                return web.json_response({'status': 'success'})
-            else:
-                return web.json_response({'error': 'No slug provided'}, status=400)
+        try:
+            if request.method == 'POST' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
+                data: dict = await request.json()
+                slug: str = data.get('slug')
+                if slug:
+                    await add_clip_to_blacklist(slug, database_instance)
+                    return web.json_response({'status': 'success'})
+                else:
+                    return web.json_response({'error': 'No slug provided'}, status=400)
+        except Exception as e:
+            logging.error(f"Error: {e} - {request} - {request.query} - {request.headers}")
+            return web.json_response({'error': 'Internal server error'}, status=500)
             
     async def remove_from_blacklist(request):
-        if request.method == 'POST' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
-            data: dict = await request.json()
-            slug: str = data.get('slug')
-            if slug:
-                await remove_clip_from_blacklist(slug, database_instance)
-                return web.json_response({'status': 'success'})
-            else:
-                return web.json_response({'error': 'No slug provided'}, status=400)
+        try:
+            if request.method == 'POST' and request.query.get('webserver_secret_token') == CONFIGS['webserver_secret_token']:
+                data: dict = await request.json()
+                slug: str = data.get('slug')
+                if slug:
+                    await remove_clip_from_blacklist(slug, database_instance)
+                    return web.json_response({'status': 'success'})
+                else:
+                    return web.json_response({'error': 'No slug provided'}, status=400)
+        except Exception as e:
+            logging.error(f"Error: {e} - {request} - {request.query} - {request.headers}")
+            return web.json_response({'error': 'Internal server error'}, status=500)
 
     app = web.Application()
     app.add_routes([web.get('/clip', handle_clip_request)])
@@ -327,7 +343,7 @@ async def main():
     
     tasks.append(asyncio.create_task(fetch_clips(clips_queue, aiohttp_session)))
     tasks.append(asyncio.create_task(process_clips_queue(clips_queue, telegram_queue, database_instance)))
-    tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
+    #tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
                  
     if CONFIGS['enable_clip_server'] and os.path.exists('static/index.html'):
         tasks.append(asyncio.create_task(run_clip_server(database_instance, CONFIGS['clip_server_host'], CONFIGS['clip_server_port'])))
