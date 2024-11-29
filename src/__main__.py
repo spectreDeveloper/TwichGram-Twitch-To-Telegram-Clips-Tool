@@ -65,7 +65,7 @@ def load_configs():
     argparser: argparse.ArgumentParser = argparse.ArgumentParser()
     try:
         # Aggiunge un argomento facoltativo per passare un percorso personalizzato del file .env
-        argparser.add_argument("-env", type=str, required=False, default=".env", help="Path to the .env file")
+        argparser.add_argument("-env", type=str, required=False, default="config.env", help="Path to the .env file")
         arguments = argparser.parse_args()
 
         # Se viene fornito un percorso specifico, carica il file .env da quel percorso
@@ -191,37 +191,40 @@ async def fetch_clips(clips_queue: asyncio.Queue, aiohttp_session: aiohttp.Clien
                     'first': 100,
                     'is_featured': 'false',
                 }
-
-                async with aiohttp_session.get('https://api.twitch.tv/helix/clips', params=params, headers=oauth_headers) as response:
-                    
-                    if response.status == 200:
-                        data = await response.json()
-                        clips = data['data']
-
-                        if not clips:
-                            logging.info("No clips found for this cycle")
-                            break
-
-                        for clip in clips:
-                            await clips_queue.put(TwitchClip(
-                                clip['id'],
-                                clip['title'],
-                                clip['url'],
-                                clip['created_at'],
-                                clip['duration'],
-                                clip['creator_name'],
-                                f"https://www.twitch.tv/{clip['creator_name']}",
-                                clip['thumbnail_url'],
-                                clip['thumbnail_url'].replace('-preview-480x272.jpg', '.mp4')
-                            ))
-                            
-                        cursor = data.get('pagination', {}).get('cursor', "")
+                try:
+                    async with aiohttp_session.get('https://api.twitch.tv/helix/clips', params=params, headers=oauth_headers) as response:
                         
-                        if not cursor:
-                            break
-                    else:
-                        logging.info(f"Error: {response.status}")
-                        return None
+                        if response.status == 200:
+                            data = await response.json()
+                            clips = data['data']
+
+                            if not clips:
+                                logging.info("No clips found for this cycle")
+                                break
+
+                            for clip in clips:
+                                await clips_queue.put(TwitchClip(
+                                    clip['id'],
+                                    clip['title'],
+                                    clip['url'],
+                                    clip['created_at'],
+                                    clip['duration'],
+                                    clip['creator_name'],
+                                    f"https://www.twitch.tv/{clip['creator_name']}",
+                                    clip['thumbnail_url'],
+                                    clip['thumbnail_url'].replace('-preview-480x272.jpg', '.mp4')
+                                ))
+                                
+                            cursor = data.get('pagination', {}).get('cursor', "")
+                            
+                            if not cursor:
+                                break
+                        else:
+                            logging.info(f"Error: {response.status}")
+                            return None
+                except Exception as e:
+                    logging.error(f"Error: {e}")
+                    return None
         finally:
             logging.info(f"Cycle ended! Sleeping for {CONFIGS['clip_fetch_interval']} seconds")
             await asyncio.sleep(CONFIGS['clip_fetch_interval'])
