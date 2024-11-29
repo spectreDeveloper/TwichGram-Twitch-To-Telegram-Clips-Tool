@@ -299,7 +299,7 @@ async def run_clip_server(database_instance: aiosqlite.Connection, host: str, po
                 return web.json_response({'error': 'No clips found'}, status=404)
 
     async def handle_index_request(request):
-        html_content: str = open('static/index.html', 'r').read().replace('[PICTURE_LOAD_HERE]', random.choice(CONFIGS['loading_video_pictures']))
+        html_content: str = open('src/static/index.html', 'r').read().replace('[PICTURE_LOAD_HERE]', random.choice(CONFIGS['loading_video_pictures']))
         return web.Response(text=html_content, content_type='text/html')
 
     async def get_blacklist_clips(request):
