@@ -374,15 +374,15 @@ async def main():
     
     aiohttp_session: aiohttp.ClientSession = aiohttp.ClientSession()
     
-    database_instance: aiosqlite.Connection = await aiosqlite.connect("clips.db")
+    database_instance: aiosqlite.Connection = await aiosqlite.connect("database/clips.db")
     
     tasks.append(asyncio.create_task(fetch_clips(clips_queue, aiohttp_session)))
     tasks.append(asyncio.create_task(process_clips_queue(clips_queue, telegram_queue, database_instance)))
     tasks.append(asyncio.create_task(process_telegram_queue(telegram_queue, aiohttp_session, pyro_instance)))
                  
-    if CONFIGS['enable_clip_server'] and os.path.exists('static/index.html'):
+    if CONFIGS['enable_clip_server'] and os.path.exists('src/static/index.html'):
         tasks.append(asyncio.create_task(run_clip_server(database_instance, CONFIGS['clip_server_host'], CONFIGS['clip_server_port'])))
-    elif not os.path.exists('static/index.html'):
+    elif not os.path.exists('src/static/index.html'):
         logging.error("No index.html file found in static/ directory! Server will not start")
         
     await asyncio.gather(*tasks)
