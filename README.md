@@ -14,6 +14,7 @@ TwichGram is a Python tool that automates downloading Twitch clips and sending t
     Python 3.12
 
 <h3>Installation 💻</h3>
+    You can use: docker-compose build && docker-compose up to install easy otherwise follow the next steps.
 
     git clone https://github.com/spectreDeveloper/TwichGram---Twitch-To-Telegram-Clips-Tool.git
 
