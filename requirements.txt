@@ -1,3 +1,6 @@
 aiohttp==3.9.3
 aiosqlite==0.20.0
 orjson==3.10.6
+https://github.com/KurimuzonAkuma/pyrogram/archive/dev.zip
+tgcrypto
+python-dotenv

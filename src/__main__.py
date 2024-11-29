@@ -20,6 +20,7 @@ import orjson
 import argparse
 
 import random
+from dotenv import load_dotenv
 
 @dataclass
 class TwitchClip:
@@ -53,23 +54,54 @@ logger = logging.getLogger()
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
+
 def load_configs():
-    parse_json = lambda p: orjson.loads(open(p, "rb").read())
+    """
+    Carica configurazioni da variabili di ambiente o file .env
+    """
+    # Carica il file .env
+    load_dotenv()
+
     argparser: argparse.ArgumentParser = argparse.ArgumentParser()
     try:
-        argparser.add_argument("-config", type=parse_json, required=False, default="./data/configs.json", help="Path to the config file")
+        # Aggiunge un argomento facoltativo per passare un percorso personalizzato del file .env
+        argparser.add_argument("-env", type=str, required=False, default=".env", help="Path to the .env file")
         arguments = argparser.parse_args()
-        return arguments.config
+
+        # Se viene fornito un percorso specifico, carica il file .env da quel percorso
+        if arguments.env and os.path.exists(arguments.env):
+            load_dotenv(arguments.env, override=True)
+
+        # Leggi le configurazioni dalle variabili di ambiente
+        configs = {
+            "broadcaster_id": int(os.getenv("BROADCASTER_ID", 0)),
+            "broadcaster_name": os.getenv("BROADCASTER_NAME", ""),
+            "twitch_client_id": os.getenv("TWITCH_CLIENT_ID", ""),
+            "twitch_client_secret": os.getenv("TWITCH_CLIENT_SECRET", ""),
+            "clip_fetch_interval": int(os.getenv("CLIP_FETCH_INTERVAL", 120)),
+            "app_id": int(os.getenv("APP_ID", 0)),
+            "app_hash": os.getenv("APP_HASH", ""),
+            "session_name": os.getenv("SESSION_NAME", ""),
+            "telegram_channel_name": os.getenv("TELEGRAM_CHANNEL_NAME", ""),
+            "telegram_bot_token": os.getenv("TELEGRAM_BOT_TOKEN", ""),
+            "target_chat_ids": list(map(int, os.getenv("TARGET_CHAT_IDS", "").split(","))),
+            "enable_clip_server": os.getenv("ENABLE_CLIP_SERVER", "false").lower() == "true",
+            "clip_server_host": os.getenv("CLIP_SERVER_HOST", "0.0.0.0"),
+            "clip_server_port": int(os.getenv("CLIP_SERVER_PORT", 5000)),
+            "loading_video_pictures": os.getenv("LOADING_VIDEO_PICTURES", "").split(","),
+            "webserver_secret_token": os.getenv("WEBSERVER_SECRET_TOKEN", ""),
+        }
+
+        return configs
     except Exception as e:
         logging.error(f"Error during loading config file: {e}")
         exit(1)
 
-# load configs as CONFIGS
-CONFIGS: dict = load_configs()
+CONFIGS = load_configs()
 
 # db parts
 async def init_clips_database():
-    async with aiosqlite.connect('clips.db') as db:
+    async with aiosqlite.connect('database/clips.db') as db:
         await db.execute('CREATE TABLE IF NOT EXISTS clips (slug TEXT PRIMARY KEY, title TEXT, url TEXT, created_at TEXT, durationSeconds INTEGER, curator_name TEXT, curator_url TEXT, thumbnail_url TEXT, mp4_url TEXT)')
         await db.execute('CREATE TABLE IF NOT EXISTS blacklist_clips (slug TEXT PRIMARY KEY)')
         

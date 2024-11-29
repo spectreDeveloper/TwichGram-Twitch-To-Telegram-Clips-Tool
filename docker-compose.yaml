@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    env_file:
+      - config.env
+    volumes:
+      - ./database:/app/database
+    network_mode: host

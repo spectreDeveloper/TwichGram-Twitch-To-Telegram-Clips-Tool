@@ -1,0 +1,31 @@
+# Escludi il database
+database/
+*.db
+
+# Escludi i file di configurazione sensibili
+.env
+
+# Escludi file generati da Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Escludi log e file temporanei
+*.log
+*.tmp
+
+# Escludi cartelle e file creati da IDE o editor di testo
+.vscode/
+.idea/
+*.swp
+
+# Escludi cartelle di build o dipendenze locali
+build/
+dist/
+*.egg-info/
+
+# Escludi file e cartelle generati da Docker
+*.pid
+*.sock
+.env.docker
+docker-compose.override.yml
