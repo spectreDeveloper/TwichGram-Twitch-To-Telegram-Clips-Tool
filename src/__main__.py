@@ -233,10 +233,10 @@ async def fetch_clips(clips_queue: asyncio.Queue, aiohttp_session: aiohttp.Clien
                                 break
                         else:
                             logging.info(f"Error: {response.status}")
-                            return None
+                            continue
                 except Exception as e:
                     logging.error(f"Error: {e}")
-                    return None
+                    continue
         finally:
             logging.info(f"Cycle ended! Sleeping for {CONFIGS['clip_fetch_interval']} seconds")
             await asyncio.sleep(CONFIGS['clip_fetch_interval'])
