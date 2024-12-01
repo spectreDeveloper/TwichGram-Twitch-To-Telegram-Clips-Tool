@@ -191,7 +191,7 @@ async def fetch_clips(clips_queue: asyncio.Queue, aiohttp_session: aiohttp.Clien
             expiring_date = datetime.now() + timedelta(seconds=oauth_token[1])
             
         cursor: str = ""
-        start_date: str = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        start_date: str = (datetime.now() - timedelta(days=60)).strftime('%Y-%m-%dT%H:%M:%SZ')
         
         try:
             while True:
