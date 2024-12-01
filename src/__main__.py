@@ -148,22 +148,34 @@ def get_oauth_headers(auth_token: str, client_id: str) -> dict:
         'Client-Id': client_id,
     }
 
+MAX_RETRIES = 3  # Numero massimo di tentativi
+RETRY_DELAY = 2  # Ritardo in secondi tra i tentativi
+
 async def get_twitch_bearer() -> tuple:
-    async with aiohttp.ClientSession() as session:
-        async with session.post("https://id.twitch.tv/oauth2/token", data={
-            "client_id": CONFIGS['twitch_client_id'],
-            "client_secret": CONFIGS['twitch_client_secret'],
-            "grant_type": "client_credentials"
-        }) as response:
-            if response.status == 200:
-                try:
-                    response_json = await response.json()
-                    return (response_json["access_token"], response_json["expires_in"])
-                except Exception as e:
-                    logging.error(f"Error: {e}")
-                    return (None, None)
-            else:
-                return (None, None)
+    retries = 0
+    while retries < MAX_RETRIES:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://id.twitch.tv/oauth2/token", data={
+                    "client_id": CONFIGS['twitch_client_id'],
+                    "client_secret": CONFIGS['twitch_client_secret'],
+                    "grant_type": "client_credentials"
+                }) as response:
+                    if response.status == 200:
+                        response_json = await response.json()
+                        return (response_json["access_token"], response_json["expires_in"])
+                    else:
+                        logging.error(f"Failed to fetch token, status code: {response.status}")
+        except Exception as e:
+            logging.error(f"Exception during request: {e}")
+        
+        retries += 1
+        if retries < MAX_RETRIES:
+            logging.info(f"Retrying... ({retries}/{MAX_RETRIES})")
+            await asyncio.sleep(RETRY_DELAY)
+    
+    logging.error("Max retries reached. Unable to fetch Twitch bearer token.")
+    return (None, None)
            
 # clips part
 async def fetch_clips(clips_queue: asyncio.Queue, aiohttp_session: aiohttp.ClientSession):
