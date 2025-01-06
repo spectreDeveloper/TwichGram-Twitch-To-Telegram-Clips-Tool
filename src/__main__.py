@@ -245,9 +245,12 @@ async def process_clips_queue(clips_queue: asyncio.Queue, telegram_queue: asynci
     while True:
         clip = await clips_queue.get()
         if isinstance(clip, TwitchClip):
-            if not await check_if_clip_exists(clip.slug, database_instance):
-                await add_clip_to_db(clip, database_instance)
-                await telegram_queue.put(clip)
+            if clip.mp4_url.endswith('.mp4'):
+                if not await check_if_clip_exists(clip.slug, database_instance):
+                    await add_clip_to_db(clip, database_instance)
+                    await telegram_queue.put(clip)
+            else:
+                logging.error(f"Clip {clip.slug} is not a mp4 file and is broken. Skipping...")
 
 async def send_clip_to_telegram(clip: TwitchClip, aiohttp_session: aiohttp.ClientSession, pyro_instance: Client, target_chat_id: int):
     share_clip_url = f"https://t.me/share/url?url={clip.url}"
